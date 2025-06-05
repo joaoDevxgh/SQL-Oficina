@@ -1,0 +1,116 @@
+-- Limpar Banco anterior
+DROP DATABASE IF EXISTS Oficina;
+CREATE DATABASE Oficina;
+USE Oficina;
+
+-- 🔸 Tabela Veiculo
+CREATE TABLE Veiculo (
+    idVeiculo INT AUTO_INCREMENT PRIMARY KEY,
+    Placa VARCHAR(45) NOT NULL,
+    Marca VARCHAR(45) NOT NULL,
+    Modelo VARCHAR(45) NOT NULL,
+    Ano VARCHAR(45) NOT NULL,
+    ClienteNome VARCHAR(45) NOT NULL
+);
+
+-- 🔸 Tabela Mecânicos
+CREATE TABLE Mecanicos (
+    idMecanicos INT AUTO_INCREMENT PRIMARY KEY,
+    Nome VARCHAR(45) NOT NULL
+);
+
+-- 🔸 Tabela Equipe
+CREATE TABLE Equipe (
+    idEquipe INT AUTO_INCREMENT PRIMARY KEY,
+    idMecanicos INT NOT NULL,
+    FOREIGN KEY (idMecanicos) REFERENCES Mecanicos(idMecanicos)
+);
+
+-- 🔸 Tabela Ordem de Serviço (OS)
+CREATE TABLE Tabela_OS (
+    idTabela_OS INT AUTO_INCREMENT PRIMARY KEY,
+    Data_Abertura VARCHAR(45) NOT NULL,
+    Data_Entrega VARCHAR(45),
+    Status VARCHAR(45) DEFAULT 'Aberto'
+);
+
+-- 🔸 Relacionamento Equipe_has_Tabela_OS
+CREATE TABLE Equipe_has_Tabela_OS (
+    idEquipe INT NOT NULL,
+    idMecanicos INT NOT NULL,
+    idTabela_OS INT NOT NULL,
+    PRIMARY KEY (idEquipe, idMecanicos, idTabela_OS),
+    FOREIGN KEY (idEquipe) REFERENCES Equipe(idEquipe),
+    FOREIGN KEY (idMecanicos) REFERENCES Mecanicos(idMecanicos),
+    FOREIGN KEY (idTabela_OS) REFERENCES Tabela_OS(idTabela_OS)
+);
+
+-- 🔸 Tabela Peças
+CREATE TABLE Pecas (
+    idPecas INT AUTO_INCREMENT PRIMARY KEY,
+    Filtro_oleo VARCHAR(45),
+    Pastilha_freio VARCHAR(45),
+    idVeiculo INT NOT NULL,
+    FOREIGN KEY (idVeiculo) REFERENCES Veiculo(idVeiculo)
+);
+
+-- 🔸 Tabela Serviços
+CREATE TABLE Servicos (
+    idServicos INT AUTO_INCREMENT PRIMARY KEY,
+    Troca_oleo VARCHAR(45),
+    Alinhamento_direcao VARCHAR(45),
+    idPecas INT NOT NULL,
+    idVeiculo INT NOT NULL,
+    FOREIGN KEY (idPecas) REFERENCES Pecas(idPecas),
+    FOREIGN KEY (idVeiculo) REFERENCES Veiculo(idVeiculo)
+);
+
+-- 🔸 Tabela Execução de Serviços
+CREATE TABLE Execucao_Servicos (
+    idExecucao INT AUTO_INCREMENT PRIMARY KEY,
+    Data_Execucao VARCHAR(45) NOT NULL,
+    Mecanico_Responsavel VARCHAR(45) NOT NULL,
+    Status_Execucao VARCHAR(45) DEFAULT 'Pendente',
+    idServicos INT NOT NULL,
+    idPecas INT NOT NULL,
+    idVeiculo INT NOT NULL,
+    FOREIGN KEY (idServicos) REFERENCES Servicos(idServicos),
+    FOREIGN KEY (idPecas) REFERENCES Pecas(idPecas),
+    FOREIGN KEY (idVeiculo) REFERENCES Veiculo(idVeiculo)
+);
+
+SELECT * FROM Veiculo;
+SELECT * FROM Mecanicos;
+SELECT * FROM Servicos;
+
+SELECT * FROM Veiculo WHERE Marca = 'Toyota';
+SELECT * FROM Tabela_OS WHERE Status = 'Fechado';
+SELECT * FROM Mecanicos WHERE Nome LIKE '%Carlos%';
+
+SELECT 
+    CONCAT(Marca, ' ', Modelo, ' - ', Placa) AS DescricaoVeiculo,
+    Ano,
+    ClienteNome
+FROM Veiculo;
+
+SELECT * FROM Veiculo ORDER BY Marca ASC;
+SELECT * FROM Execucao_Servicos ORDER BY Data_Execucao DESC;
+
+SELECT 
+    idMecanicos,
+    COUNT(*) AS TotalExecucoes
+FROM Execucao_Servicos
+GROUP BY idMecanicos
+HAVING TotalExecucoes > 2;
+
+SELECT 
+    e.idExecucao,
+    v.Placa,
+    v.Marca,
+    s.Troca_oleo,
+    es.Data_Execucao,
+    es.Mecanico_Responsavel
+FROM Execucao_Servicos es
+JOIN Veiculo v ON es.idVeiculo = v.idVeiculo
+JOIN Servicos s ON es.idServicos = s.idServicos;
+
